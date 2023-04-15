@@ -6,6 +6,37 @@ import numpy as np
 import random
 import time
 
+class Ant():
+	def __init__(self, cities, alpha=1, beta=1):
+		self.route = []
+		self.route_set = set()
+		self.alpha = alpha
+		self.beta = beta
+	
+	def chooseNextCity(self, pheromoneMatrix, cities):
+		if len(self.route) == len(cities):
+			print("I'm not sure if this should run...")
+			return None
+		# if we haven't visited any cities yet, choose a random one
+		if len(self.route) == 0:
+			rand_city_index = random.randrange(len(cities)) # start at a random city
+			self.route.append(rand_city_index)
+			self.route_set.add(rand_city_index)
+		else:
+			# if we have visited some cities, choose the next one based on 
+			# the pheromone matrix and the distance matrix
+			# calculate the probabilities of choosing each city
+			probs = np.zeros(len(cities))
+			i = self.route[-1]
+			for j in range(len(cities)):
+				if j not in self.route_set:
+					probs[j] = pheromoneMatrix[i][j]**self.alpha * (1 / cities[i].costTo(cities[j]))**self.beta
+			# normalize the probabilities
+			probs /= sum(probs)
+			# choose the next city
+			next_city_index = np.random.choice(len(cities), p=probs)
+			self.route.append(next_city_index)
+			self.route_set.add(next_city_index)
 
 
 class TSPCostMatrix:
@@ -105,7 +136,7 @@ class TSPCostMatrix:
 	def __str__(self):
 		return str(self.matrix)
 
-	
+
 class GreedyMatrix(TSPCostMatrix):
 	def __init__(self, cities):
 		super().__init__(cities)

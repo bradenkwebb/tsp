@@ -27,7 +27,6 @@ class TSPSolver:
 	def setupWithScenario( self, scenario ):
 		self._scenario = scenario
 
-
 	''' <summary>
 		This is the entry point for the default solver
 		which just finds a valid random tour.  Note this could be used to find your
@@ -38,7 +37,6 @@ class TSPSolver:
 		solution found, and three null values for fields not used for this
 		algorithm</returns>
 	'''
-
 	def defaultRandomTour( self, time_allowance=60.0 ):
 		results = {}
 		cities = self._scenario.getCities()
@@ -71,7 +69,6 @@ class TSPSolver:
 		if self._bssf is None or results['cost'] < self._bssf.cost:
 			self._bssf = bssf
 		return results
-
 
 	''' <summary>
 		This algorithm finds a (generally sub-optimal) solution to the TSP. It returns the first solution it finds,
@@ -217,8 +214,6 @@ class TSPSolver:
 				states.append(newMatrix)
 		return states
 
-
-
 	''' <summary>
 		This is the entry point for the algorithm you'll write for your group project.
 		</summary>
@@ -227,6 +222,75 @@ class TSPSolver:
 		best solution found.  You may use the other three field however you like.
 		algorithm</returns>
 	'''
-
-	def fancy( self,time_allowance=60.0 ):
+	def fancy(self, time_allowance=60.0):
 		pass
+
+	def maxMinAntColony(self, time_allowance=60.0):
+		"""This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem."""
+		cities = self._scenario.getCities()
+		max_iterations = 1000
+		num_ants = 10
+		self.rho = 9.8 # evaporation rate (this probably isn't where I should put this)
+		self.beta = 2 # heuristic importance
+		self.p_best = 0.05 # probability that constructed solution will contain solely the highest pheromone edges
+
+		# Initialize the best-so-far solution with the greedy algorithm
+		results = self.greedy(time_allowance=time_allowance)
+		results['count'] = 0
+		results['max'] = 0
+		results['total'] = 1
+		results['pruned'] = 0
+		bssf = results['soln']
+
+		# Initialize the pheromone matrix
+		pheromone_matrix = np.array([[1 for _ in range(len(cities))] for _ in range(len(cities))]) # initialize to 1 (maybe we should go way higher)
+
+		# Initialize the heuristic matrix
+
+		# Initialize the ant population
+		ants = [Ant(cities) for _ in range(num_ants)]
+
+		# Iterate until time runs out or the algorithm converges
+		converged = False
+		start_time = time.time()
+		num_iterations = 0
+		while not converged and time.time() - start_time < time_allowance and num_iterations < max_iterations:
+			for ant in ants:
+				for k in range(len(cities)):
+					ant.chooseNextCity(pheromone_matrix, cities)
+				ant.route.append(ant.route[0]) # close the loop
+			iter_best = min(ants, key=lambda ant: ant.getCost(cities))
+			if iter_best.getCost(cities) < bssf.cost:
+				bssf = TSPSolution(iter_best.route)
+				results['count'] += 1
+				tau_max = 1 / (self.rho * iter_best.getCost(cities)) # this was github copilot, not me
+				tau_min = tau_max / (2 * len(cities)) # this was github copilot, not me
+			tau_max, tau_min = self.calcTauLimits(pheromone_matrix, tau_max, tau_min, bssf)
+			pheromone_matrix = self.updatePheromones(pheromone_matrix, ants, cities, tau_max, tau_min)
+			# converged = self.checkConvergence(pheromone_matrix, tau_max, tau_min)
+			num_iterations += 1
+
+	"""
+	Much of this was adapted into Python from:
+	R. Skinderowicz,
+	Improving Ant Colony Optimization efficiency for solving large TSP instances,
+	Applied Soft Computing, 2022, 108653, ISSN 1568-4946,
+	https://doi.org/10.1016/j.asoc.2022.108653
+	"""
+	def calcTauLimits(self, pheromone_matrix, tau_max, tau_min, bssf):
+		tau_max = max(pheromone_matrix.max(), 1 / (bssf.cost * (1 - self.rho)))
+		average = len(pheromone_matrix) / 2
+		prob = pow(self.p_best, 1 / len(pheromone_matrix))
+		tau_min = min(tau_max, tau_max * (1 - prob) / ((average - 1) * prob))
+		return tau_max, tau_min
+
+	def updatePheromones(self, pheromone_matrix, ants, cities, tau_max, tau_min):
+		"""Github copilot wrote all of this function, no idea what it does yet"""
+		pheromone_matrix = (1 - self.rho) * pheromone_matrix
+		for ant in ants:
+			ant_cost = ant.getCost(cities)
+			for i in range(len(ant.route) - 1):
+				pheromone_matrix[ant.route[i]][ant.route[i + 1]] += 1 / ant_cost
+				pheromone_matrix[ant.route[i + 1]][ant.route[i]] += 1 / ant_cost
+		pheromone_matrix = np.clip(pheromone_matrix, tau_min, tau_max)
+		return pheromone_matrix
