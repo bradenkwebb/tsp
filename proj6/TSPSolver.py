@@ -242,10 +242,22 @@ class TSPSolver:
 		results['pruned'] = 0
 		bssf = results['soln']
 
+		dist_matrix = np.array([[cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))])
+		print(dist_matrix)
 		# Initialize the pheromone matrix
 		pheromone_matrix = np.array([[1 for _ in range(len(cities))] for _ in range(len(cities))]) # initialize to 1 (maybe we should go way higher)
 
 		# Initialize the heuristic matrix
+		heuristic_matrix = np.ones_like(dist_matrix)
+		for i in range(len(cities)):
+			for j in range(len(cities)):
+				if dist_matrix[i][j] != 0:
+					heuristic_matrix[i][j] = 1 / dist_matrix[i][j]
+				else:
+					heuristic_matrix[i][j] = 1
+
+		# heuristic_matrix = np.array([[1 / cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))])
+		print(heuristic_matrix)
 
 		# Initialize the ant population
 		ants = [Ant(cities) for _ in range(num_ants)]
@@ -256,8 +268,9 @@ class TSPSolver:
 		num_iterations = 0
 		while not converged and time.time() - start_time < time_allowance and num_iterations < max_iterations:
 			for ant in ants:
+				stuck = False
 				for k in range(len(cities)):
-					ant.chooseNextCity(pheromone_matrix, cities)
+					stuck = ant.chooseNextCity(pheromone_matrix, heuristic_matrix)
 				ant.route.append(ant.route[0]) # close the loop
 			iter_best = min(ants, key=lambda ant: ant.getCost(cities))
 			if iter_best.getCost(cities) < bssf.cost:
@@ -296,3 +309,4 @@ class TSPSolver:
 				pheromone_matrix[ant.route[i + 1]][ant.route[i]] += 1 / ant_cost
 		pheromone_matrix = np.clip(pheromone_matrix, tau_min, tau_max)
 		return pheromone_matrix
+	

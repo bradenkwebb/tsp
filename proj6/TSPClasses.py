@@ -13,33 +13,39 @@ class Ant():
 		self.alpha = alpha
 		self.beta = beta
 	
-	def chooseNextCity(self, pheromoneMatrix, cities):
-		if len(self.route) == len(cities):
+	def chooseNextCity(self, pheromone_matrix, heuristic_matrix):
+		total_num_cities = len(pheromone_matrix)
+		if len(self.route) == total_num_cities:
 			print("I'm not sure if this should run...")
-			return None
+			return True
 		# if we haven't visited any cities yet, choose a random one
 		if len(self.route) == 0:
-			rand_city_index = random.randrange(len(cities)) # start at a random city
+			rand_city_index = random.randrange(total_num_cities) # start at a random city
 			self.route.append(rand_city_index)
 			self.route_set.add(rand_city_index)
+			stuck = False
 		else:
 			# if we have visited some cities, choose the next one based on 
-			# the pheromone matrix and the distance matrix
+			# the pheromone matrix and the heuristic matrix
 			# calculate the probabilities of choosing each city
-			probs = np.zeros(len(cities))
+			probs = np.zeros(total_num_cities)
 			i = self.route[-1]
-			print(pheromoneMatrix)
+			print(pheromone_matrix)
 			
-			for j in range(len(cities)):
+			for j in range(total_num_cities):
 				if j not in self.route_set:
-					probs[j] = pheromoneMatrix[i][j]**self.alpha * (1 / cities[i].costTo(cities[j]))**self.beta
+					probs[j] = pheromone_matrix[i][j]**self.alpha * heuristic_matrix[i][j]**self.beta
+					if np.isnan(probs[j]):
+						print("probs[j] is nan")
 					print(f"(i,j)=({i},{j})\t probs[j]={probs[j]}")
 			# normalize the probabilities
 			probs /= sum(probs)
 			# choose the next city
-			next_city_index = np.random.choice(len(cities), p=probs)
+			next_city_index = np.random.choice(total_num_cities, p=probs)
 			self.route.append(next_city_index)
 			self.route_set.add(next_city_index)
+			stuck = False
+		return stuck
 
 
 class TSPCostMatrix:
