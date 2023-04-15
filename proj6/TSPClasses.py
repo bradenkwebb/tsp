@@ -104,6 +104,7 @@ class TSPCostMatrix:
 	
 	def __str__(self):
 		return str(self.matrix)
+
 	
 class GreedyMatrix(TSPCostMatrix):
 	def __init__(self, cities):
@@ -150,7 +151,6 @@ def nameForInt( num ):
 		return chr( ord('A')+num-1 )
 	else:
 		return nameForInt((num-1) // 26 ) + nameForInt((num-1)%26+1)
-
 
 
 class Scenario:
@@ -226,8 +226,6 @@ class Scenario:
 			if self._edge_exists[src,dst] and can_delete[src,dst]:
 				self._edge_exists[src,dst] = False
 				num_to_remove -= 1
-
-
 
 
 class City:
