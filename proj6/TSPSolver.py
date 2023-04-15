@@ -225,7 +225,7 @@ class TSPSolver:
 	def fancy(self, time_allowance=60.0):
 		pass
 
-	def maxMinAntColony(self, time_allowance=60.0):
+	def maxMinACO(self, time_allowance=60.0):
 		"""This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem."""
 		cities = self._scenario.getCities()
 		max_iterations = 1000
@@ -263,9 +263,9 @@ class TSPSolver:
 			if iter_best.getCost(cities) < bssf.cost:
 				bssf = TSPSolution(iter_best.route)
 				results['count'] += 1
-				tau_max = 1 / (self.rho * iter_best.getCost(cities)) # this was github copilot, not me
+				tau_max = 1 / ((1 - self.rho) * bssf.cost)
 				tau_min = tau_max / (2 * len(cities)) # this was github copilot, not me
-			tau_max, tau_min = self.calcTauLimits(pheromone_matrix, tau_max, tau_min, bssf)
+			tau_max, tau_min = self.calcTauLimits(pheromone_matrix, tau_max, tau_min, bssf) # I'll want to change this I think
 			pheromone_matrix = self.updatePheromones(pheromone_matrix, ants, cities, tau_max, tau_min)
 			# converged = self.checkConvergence(pheromone_matrix, tau_max, tau_min)
 			num_iterations += 1
@@ -276,12 +276,14 @@ class TSPSolver:
 	Improving Ant Colony Optimization efficiency for solving large TSP instances,
 	Applied Soft Computing, 2022, 108653, ISSN 1568-4946,
 	https://doi.org/10.1016/j.asoc.2022.108653
+	which I believe was based off of this original paper: https://doi.org/10.1016/S0167-739X%2800%2900043-1 
 	"""
 	def calcTauLimits(self, pheromone_matrix, tau_max, tau_min, bssf):
 		tau_max = max(pheromone_matrix.max(), 1 / (bssf.cost * (1 - self.rho)))
 		average = len(pheromone_matrix) / 2
 		prob = pow(self.p_best, 1 / len(pheromone_matrix))
 		tau_min = min(tau_max, tau_max * (1 - prob) / ((average - 1) * prob))
+		print(f"tau_max: {tau_max}, tau_min: {tau_min}")
 		return tau_max, tau_min
 
 	def updatePheromones(self, pheromone_matrix, ants, cities, tau_max, tau_min):

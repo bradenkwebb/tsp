@@ -28,9 +28,12 @@ class Ant():
 			# calculate the probabilities of choosing each city
 			probs = np.zeros(len(cities))
 			i = self.route[-1]
+			print(pheromoneMatrix)
+			
 			for j in range(len(cities)):
 				if j not in self.route_set:
 					probs[j] = pheromoneMatrix[i][j]**self.alpha * (1 / cities[i].costTo(cities[j]))**self.beta
+					print(f"(i,j)=({i},{j})\t probs[j]={probs[j]}")
 			# normalize the probabilities
 			probs /= sum(probs)
 			# choose the next city
