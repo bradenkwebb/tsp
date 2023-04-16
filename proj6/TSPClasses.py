@@ -58,13 +58,9 @@ class Ant():
 		return cost
 	
 	def getCityRoute(self, originalCities):
-		print("self.route: ", self.route)
-		print(f"len(self.route): {len(self.route)}")
-		print(f"len(originalCities): {len(originalCities)}")
 		cityRoute = []
 		for cityIndex in self.route:
 			cityRoute.append(originalCities[cityIndex])
-		print("cityRoute: ", cityRoute)
 		return cityRoute
 
 

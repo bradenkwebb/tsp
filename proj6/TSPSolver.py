@@ -233,7 +233,7 @@ class TSPSolver:
 		self.rho = .98 # evaporation rate (this probably isn't where I should put this)
 		self.beta = 2 # heuristic importance
 		self.p_best = 0.05 # probability that constructed solution will contain solely the highest pheromone edges
-		np.set_printoptions(precision=3)
+		np.set_printoptions(precision=5)
 
 		# Initialize the best-so-far solution with the greedy algorithm
 		results = self.greedy(time_allowance=time_allowance)
@@ -264,13 +264,14 @@ class TSPSolver:
 		start_time = time.time()
 		num_iterations = 0
 		while not converged and time.time() - start_time < time_allowance:
-			print(pheromone_matrix[0])
-			ants = [Ant(cities) for _ in range(num_ants)] 		# Initialize the ant population
+			ants = set(Ant(cities) for _ in range(num_ants))	# Initialize the ant population
+			invalid_ants = set()
 			for ant in ants:
 				for _ in range(len(cities)):
 					if not ant.chooseNextCity(pheromone_matrix, heuristic_matrix):
+						invalid_ants.add(ant)
 						break
-			best_ant = min(ants, key=lambda ant: ant.getCost(dist_matrix))
+			best_ant = min(ants.difference(invalid_ants), key=lambda ant: ant.getCost(dist_matrix))
 			if best_ant.getCost(dist_matrix) < bssf.cost:
 				bssf = TSPSolution(best_ant.getCityRoute(cities))
 				print(f"New best solution!!!: {bssf.cost}")
@@ -306,23 +307,24 @@ class TSPSolver:
 		tau_max = 1 / ((1 - rho) * bssf_cost)
 		# tau_min = tau_max / (2 * len(cities))
 		tau_min = 0
-		print(f"bssf_cost: {bssf_cost}, rho: {rho}")
-		print(tau_max, tau_min)
+		# print(f"bssf_cost: {bssf_cost}, rho: {rho}")
+		# print(f"tau_max:{tau_max}, tau_min: {tau_min}")
 		return tau_max, tau_min
 
 	def updatePheromones(self, pheromone_matrix, rho, best_ant, dist_matrix, tau_max, tau_min):
 		pheromone_matrix *= rho
 		best_ant_cost = best_ant.getCost(dist_matrix)
 		# assert(best_ant_cost != np.inf)
-		if best_ant_cost == np.inf:
-			print("best_ant_cost is inf")
-		else:
-			print(f"best_ant_cost: {best_ant_cost}")
-		if best_ant_cost < tau_max:
+		# if best_ant_cost == np.inf:
+		# 	print("best_ant_cost is inf")
+		# else:
+		# 	print(f"best_ant_cost: {best_ant_cost}")
+		delta_tau = 1 / best_ant_cost
+		if delta_tau < tau_max:
 			for route_index, city_index in enumerate(best_ant.route):
 				if route_index < len(best_ant.route) - 1:
-					pheromone_matrix[city_index][best_ant.route[route_index + 1]] += 1 / best_ant_cost
+					pheromone_matrix[city_index][best_ant.route[route_index + 1]] += delta_tau
 				else:
-					pheromone_matrix[city_index][best_ant.route[0]] += 1 / best_ant_cost
+					pheromone_matrix[city_index][best_ant.route[0]] += delta_tau
 		return np.clip(pheromone_matrix, tau_min, tau_max, out=pheromone_matrix)
 		
