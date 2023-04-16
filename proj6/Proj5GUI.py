@@ -99,9 +99,9 @@ class PointLineView( QWidget ):
 		h = self.height()
 		w2h_desired_ratio = (xr[1]-xr[0])/(yr[1]-yr[0])
 		if w / h < w2h_desired_ratio:
-			 scale = w / (xr[1]-xr[0])
+			scale = w / (xr[1]-xr[0])
 		else:
-			 scale = h / (yr[1]-yr[0])
+			scale = h / (yr[1]-yr[0])
 
 		tform = QTransform()
 		tform.translate(self.width()/2.0,self.height()/2.0)
@@ -229,7 +229,7 @@ class Proj5GUI( QMainWindow ):
 		cities = self._scenario.getCities()
 		self.view.clearEdges()
 		for city in cities:
-		   self.view.addLabel( QPointF(city._x, city._y), city._name, \
+			self.view.addLabel( QPointF(city._x, city._y), city._name, \
 							   labelColor=(128,128,128), xoffset=10.0 )
 
 	def generateClicked(self):
@@ -476,7 +476,7 @@ class Proj5GUI( QMainWindow ):
 		for alg in self.ALGORITHMS:
 			self.algDropDown.addItem( alg[0] )
 		self.algDropDown.activated.connect(self.algChanged)
-		self.algDropDown.setCurrentIndex(2)
+		self.algDropDown.setCurrentIndex(4) # I changed this to 4 to start with MMACO
 		self.algChanged(2) # to handle start state
 
 		self.graphReady = False

@@ -230,7 +230,7 @@ class TSPSolver:
 		cities = self._scenario.getCities()
 		max_iterations = 1000
 		num_ants = 10
-		self.rho = 9.8 # evaporation rate (this probably isn't where I should put this)
+		self.rho = .98 # evaporation rate (this probably isn't where I should put this)
 		self.beta = 2 # heuristic importance
 		self.p_best = 0.05 # probability that constructed solution will contain solely the highest pheromone edges
 
@@ -242,10 +242,16 @@ class TSPSolver:
 		results['pruned'] = 0
 		bssf = results['soln']
 
+		# Initialize the distance matrix
 		dist_matrix = np.array([[cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))])
-		print(dist_matrix)
+
+		# Calculate the tau limits
+		tau_max, tau_min = self.calcTauLimits(bssf.cost, self.rho)
+
 		# Initialize the pheromone matrix
-		pheromone_matrix = np.array([[1 for _ in range(len(cities))] for _ in range(len(cities))]) # initialize to 1 (maybe we should go way higher)
+		pheromone_matrix = np.array([[tau_max for _ in range(len(cities))] for _ in range(len(cities))], dtype=float) # initialize to 1 (maybe we should go way higher)
+
+		np.set_printoptions(precision=3)
 
 		# Initialize the heuristic matrix
 		heuristic_matrix = np.ones_like(dist_matrix)
@@ -256,32 +262,32 @@ class TSPSolver:
 				else:
 					heuristic_matrix[i][j] = 1
 
-		# heuristic_matrix = np.array([[1 / cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))])
-		print(heuristic_matrix)
-
-		# Initialize the ant population
-		ants = [Ant(cities) for _ in range(num_ants)]
-
 		# Iterate until time runs out or the algorithm converges
 		converged = False
 		start_time = time.time()
 		num_iterations = 0
-		while not converged and time.time() - start_time < time_allowance and num_iterations < max_iterations:
+		while not converged and time.time() - start_time < time_allowance:
+			print(pheromone_matrix[0])
+			ants = [Ant(cities) for _ in range(num_ants)] 		# Initialize the ant population
 			for ant in ants:
-				stuck = False
-				for k in range(len(cities)):
-					stuck = ant.chooseNextCity(pheromone_matrix, heuristic_matrix)
-				ant.route.append(ant.route[0]) # close the loop
-			iter_best = min(ants, key=lambda ant: ant.getCost(cities))
-			if iter_best.getCost(cities) < bssf.cost:
-				bssf = TSPSolution(iter_best.route)
+				for _ in range(len(cities)):
+					if not ant.chooseNextCity(pheromone_matrix, heuristic_matrix):
+						break
+			best_ant = min(ants, key=lambda ant: ant.getCost(dist_matrix))
+			if best_ant.getCost(dist_matrix) < bssf.cost:
+				bssf = TSPSolution(best_ant.getCityRoute(cities))
+				print(f"New best solution!!!: {bssf.cost}")
 				results['count'] += 1
-				tau_max = 1 / ((1 - self.rho) * bssf.cost)
-				tau_min = tau_max / (2 * len(cities)) # this was github copilot, not me
-			tau_max, tau_min = self.calcTauLimits(pheromone_matrix, tau_max, tau_min, bssf) # I'll want to change this I think
-			pheromone_matrix = self.updatePheromones(pheromone_matrix, ants, cities, tau_max, tau_min)
+				tau_max, tau_min = self.calcTauLimits(bssf.cost, self.rho)
+			# tau_max, tau_min = self.calcTauLimits(pheromone_matrix, tau_max, tau_min, bssf) # I'll want to change this I think
+			pheromone_matrix = self.updatePheromones(pheromone_matrix, self.rho, best_ant, dist_matrix, tau_max, tau_min)
 			# converged = self.checkConvergence(pheromone_matrix, tau_max, tau_min)
 			num_iterations += 1
+		
+		results['soln'] = bssf
+		results['cost'] = bssf.cost
+		results['time'] = time.time() - start_time
+		return results
 
 	"""
 	Much of this was adapted into Python from:
@@ -291,22 +297,35 @@ class TSPSolver:
 	https://doi.org/10.1016/j.asoc.2022.108653
 	which I believe was based off of this original paper: https://doi.org/10.1016/S0167-739X%2800%2900043-1 
 	"""
-	def calcTauLimits(self, pheromone_matrix, tau_max, tau_min, bssf):
-		tau_max = max(pheromone_matrix.max(), 1 / (bssf.cost * (1 - self.rho)))
-		average = len(pheromone_matrix) / 2
-		prob = pow(self.p_best, 1 / len(pheromone_matrix))
-		tau_min = min(tau_max, tau_max * (1 - prob) / ((average - 1) * prob))
-		print(f"tau_max: {tau_max}, tau_min: {tau_min}")
+	# def calcTauLimits(self, pheromone_matrix, tau_max, tau_min, bssf):
+	# 	tau_max = max(pheromone_matrix.max(), 1 / (bssf.cost * (1 - self.rho)))
+	# 	average = len(pheromone_matrix) / 2
+	# 	prob = pow(self.p_best, 1 / len(pheromone_matrix))
+	# 	tau_min = min(tau_max, tau_max * (1 - prob) / ((average - 1) * prob))
+	# 	print(f"tau_max: {tau_max}, tau_min: {tau_min}")
+	# 	return tau_max, tau_min
+
+	def calcTauLimits(self, bssf_cost, rho):
+		tau_max = 1 / ((1 - rho) * bssf_cost)
+		# tau_min = tau_max / (2 * len(cities))
+		tau_min = 0
+		print(f"bssf_cost: {bssf_cost}, rho: {rho}")
+		print(tau_max, tau_min)
 		return tau_max, tau_min
 
-	def updatePheromones(self, pheromone_matrix, ants, cities, tau_max, tau_min):
-		"""Github copilot wrote all of this function, no idea what it does yet"""
-		pheromone_matrix = (1 - self.rho) * pheromone_matrix
-		for ant in ants:
-			ant_cost = ant.getCost(cities)
-			for i in range(len(ant.route) - 1):
-				pheromone_matrix[ant.route[i]][ant.route[i + 1]] += 1 / ant_cost
-				pheromone_matrix[ant.route[i + 1]][ant.route[i]] += 1 / ant_cost
-		pheromone_matrix = np.clip(pheromone_matrix, tau_min, tau_max)
-		return pheromone_matrix
-	
+	def updatePheromones(self, pheromone_matrix, rho, best_ant, dist_matrix, tau_max, tau_min):
+		pheromone_matrix *= rho
+		best_ant_cost = best_ant.getCost(dist_matrix)
+		# assert(best_ant_cost != np.inf)
+		if best_ant_cost == np.inf:
+			print("best_ant_cost is inf")
+		else:
+			print(f"best_ant_cost: {best_ant_cost}")
+		if best_ant_cost < tau_max:
+			for route_index, city_index in enumerate(best_ant.route):
+				if route_index < len(best_ant.route) - 1:
+					pheromone_matrix[city_index][best_ant.route[route_index + 1]] += 1 / best_ant_cost
+				else:
+					pheromone_matrix[city_index][best_ant.route[0]] += 1 / best_ant_cost
+		return np.clip(pheromone_matrix, tau_min, tau_max, out=pheromone_matrix)
+		

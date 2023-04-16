@@ -12,40 +12,60 @@ class Ant():
 		self.route_set = set()
 		self.alpha = alpha
 		self.beta = beta
+		self.complete = False
 	
 	def chooseNextCity(self, pheromone_matrix, heuristic_matrix):
 		total_num_cities = len(pheromone_matrix)
 		if len(self.route) == total_num_cities:
 			print("I'm not sure if this should run...")
-			return True
+			print(self.route)
+			return False
 		# if we haven't visited any cities yet, choose a random one
 		if len(self.route) == 0:
 			rand_city_index = random.randrange(total_num_cities) # start at a random city
 			self.route.append(rand_city_index)
 			self.route_set.add(rand_city_index)
-			stuck = False
 		else:
 			# if we have visited some cities, choose the next one based on 
 			# the pheromone matrix and the heuristic matrix
 			# calculate the probabilities of choosing each city
 			probs = np.zeros(total_num_cities)
 			i = self.route[-1]
-			print(pheromone_matrix)
 			
 			for j in range(total_num_cities):
 				if j not in self.route_set:
 					probs[j] = pheromone_matrix[i][j]**self.alpha * heuristic_matrix[i][j]**self.beta
-					if np.isnan(probs[j]):
-						print("probs[j] is nan")
-					print(f"(i,j)=({i},{j})\t probs[j]={probs[j]}")
+					assert(not np.isnan(probs[j]))
+			total = sum(probs)
+			if total == 0:
+				return False
 			# normalize the probabilities
-			probs /= sum(probs)
+			probs /= total
 			# choose the next city
 			next_city_index = np.random.choice(total_num_cities, p=probs)
 			self.route.append(next_city_index)
 			self.route_set.add(next_city_index)
-			stuck = False
-		return stuck
+		return True
+	
+	def getCost(self, dist_matrix):
+		if len(self.route) < len(dist_matrix) - 1:
+			return np.inf
+		
+		cost = 0
+		for i in range(len(self.route)-1):
+			cost += dist_matrix[self.route[i]][self.route[i+1]]
+		cost += dist_matrix[self.route[-1]][self.route[0]]
+		return cost
+	
+	def getCityRoute(self, originalCities):
+		print("self.route: ", self.route)
+		print(f"len(self.route): {len(self.route)}")
+		print(f"len(originalCities): {len(originalCities)}")
+		cityRoute = []
+		for cityIndex in self.route:
+			cityRoute.append(originalCities[cityIndex])
+		print("cityRoute: ", cityRoute)
+		return cityRoute
 
 
 class TSPCostMatrix:
