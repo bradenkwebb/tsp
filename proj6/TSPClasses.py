@@ -8,6 +8,7 @@ import time
 
 class Ant():
 	def __init__(self, cities, alpha=1, beta=1):
+		self.cities = cities
 		self.route = []
 		self.route_set = set()
 		self.alpha = alpha
@@ -15,24 +16,23 @@ class Ant():
 		self.complete = False
 	
 	def chooseNextCity(self, pheromone_matrix, heuristic_matrix):
-		total_num_cities = len(pheromone_matrix)
-		if len(self.route) == total_num_cities:
+		if len(self.route) == len(self.cities):
 			print("I'm not sure if this should run...")
 			print(self.route)
 			return False
 		# if we haven't visited any cities yet, choose a random one
 		if len(self.route) == 0:
-			rand_city_index = random.randrange(total_num_cities) # start at a random city
+			rand_city_index = random.randrange(len(self.cities)) # start at a random city
 			self.route.append(rand_city_index)
 			self.route_set.add(rand_city_index)
 		else:
 			# if we have visited some cities, choose the next one based on 
 			# the pheromone matrix and the heuristic matrix
 			# calculate the probabilities of choosing each city
-			probs = np.zeros(total_num_cities)
+			probs = np.zeros(len(self.cities))
 			i = self.route[-1]
 			
-			for j in range(total_num_cities):
+			for j in range(len(self.cities)):
 				if j not in self.route_set:
 					probs[j] = pheromone_matrix[i][j]**self.alpha * heuristic_matrix[i][j]**self.beta
 					assert(not np.isnan(probs[j]))
@@ -42,7 +42,7 @@ class Ant():
 			# normalize the probabilities
 			probs /= total
 			# choose the next city
-			next_city_index = np.random.choice(total_num_cities, p=probs)
+			next_city_index = np.random.choice(len(self.cities), p=probs)
 			self.route.append(next_city_index)
 			self.route_set.add(next_city_index)
 		return True
@@ -57,10 +57,10 @@ class Ant():
 		cost += dist_matrix[self.route[-1]][self.route[0]]
 		return cost
 	
-	def getCityRoute(self, originalCities):
+	def getCityRoute(self):
 		cityRoute = []
 		for cityIndex in self.route:
-			cityRoute.append(originalCities[cityIndex])
+			cityRoute.append(self.cities[cityIndex])
 		return cityRoute
 
 
