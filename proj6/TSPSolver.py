@@ -3,8 +3,8 @@
 from which_pyqt import PYQT_VER
 if PYQT_VER == 'PYQT5':
 	from PyQt5.QtCore import QLineF, QPointF
-elif PYQT_VER == 'PYQT4':
-	from PyQt4.QtCore import QLineF, QPointF
+# elif PYQT_VER == 'PYQT4':
+# 	from PyQt4.QtCore import QLineF, QPointF
 elif PYQT_VER == 'PYQT6':
 	from PyQt6.QtCore import QLineF, QPointF
 else:
@@ -233,6 +233,7 @@ class TSPSolver:
 		self.rho = .98 # evaporation rate (this probably isn't where I should put this)
 		self.beta = 2 # heuristic importance
 		self.p_best = 0.05 # probability that constructed solution will contain solely the highest pheromone edges
+		np.set_printoptions(precision=3)
 
 		# Initialize the best-so-far solution with the greedy algorithm
 		results = self.greedy(time_allowance=time_allowance)
@@ -242,16 +243,12 @@ class TSPSolver:
 		results['pruned'] = 0
 		bssf = results['soln']
 
-		# Initialize the distance matrix
-		dist_matrix = np.array([[cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))])
-
-		# Calculate the tau limits
-		tau_max, tau_min = self.calcTauLimits(bssf.cost, self.rho)
+		
+		dist_matrix = np.array([[cities[i].costTo(cities[j]) for j in range(len(cities))] for i in range(len(cities))]) # Initialize the distance matrix
+		tau_max, tau_min = self.calcTauLimits(bssf.cost, self.rho) # Calculate the tau limits
 
 		# Initialize the pheromone matrix
 		pheromone_matrix = np.array([[tau_max for _ in range(len(cities))] for _ in range(len(cities))], dtype=float) # initialize to 1 (maybe we should go way higher)
-
-		np.set_printoptions(precision=3)
 
 		# Initialize the heuristic matrix
 		heuristic_matrix = np.ones_like(dist_matrix)
