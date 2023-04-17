@@ -24,14 +24,15 @@ if __name__ == "__main__":
             "Time (sec),Path Length,% of Greedy\n")
 
     # Required number of cities to include in table
+    city_num_list = []
     city_num_list = [15, 30, 60, 100, 200]
 
     # Add additional numbers of cities to table
-    # city_num_list += random.sample(list(range(3, 15)), 4)
-    # city_num_list += random.sample(list(range(16, 30)), 4)
-    # city_num_list += random.sample(list(range(31, 60)), 4)
-    # city_num_list += random.sample(list(range(61, 100)), 4)
-    # city_num_list += random.sample(list(range(101, 200)), 4)
+    city_num_list += random.sample(list(range(3, 15)), 4)
+    city_num_list += random.sample(list(range(16, 30)), 4)
+    city_num_list += random.sample(list(range(31, 60)), 4)
+    city_num_list += random.sample(list(range(61, 100)), 4)
+    city_num_list += random.sample(list(range(101, 200)), 4)
 
     # Sort list to start with the smallest number of cities and work our way up
     city_num_list.sort()
