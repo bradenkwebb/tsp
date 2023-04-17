@@ -15,6 +15,14 @@ class Ant():
 		self.beta = beta
 		self.complete = False
 	
+	"""
+	The method by which an ant chooses the next city to visit. 
+
+	This hasn't been constructed quite correctly, because here we have that at each step, the ants
+	consider going to ANY of the cities that they haven't visited yet. However, in the paper, there
+	is a fixed-length for the number of nearest neighbors that ants should consider: see 
+	section 4.4 of Stützle and Hoos (1999).
+	"""
 	def chooseNextCity(self, pheromone_matrix, heuristic_matrix):
 		if len(self.route) == len(self.cities):
 			print("I'm not sure if this should run...")
