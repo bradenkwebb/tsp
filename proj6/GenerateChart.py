@@ -9,9 +9,9 @@ from multiprocessing import Manager, Process
 # File name to save the table as
 TABLE_FILE = "table.csv"
 # Number of trials to average for each cell's value
-NUM_TRIALS = 2
+NUM_TRIALS = 5
 # Timeout given to each algorithm
-TIMEOUT = 10
+TIMEOUT = 600
 
 if __name__ == "__main__":
     # Write header of CSV
@@ -27,11 +27,11 @@ if __name__ == "__main__":
     city_num_list = [15, 30, 60, 100, 200]
 
     # Add additional numbers of cities to table
-    city_num_list += random.sample(list(range(3, 15)), 4)
-    city_num_list += random.sample(list(range(16, 30)), 4)
-    city_num_list += random.sample(list(range(31, 60)), 4)
-    city_num_list += random.sample(list(range(61, 100)), 4)
-    city_num_list += random.sample(list(range(101, 200)), 4)
+    # city_num_list += random.sample(list(range(3, 15)), 4)
+    # city_num_list += random.sample(list(range(16, 30)), 4)
+    # city_num_list += random.sample(list(range(31, 60)), 4)
+    # city_num_list += random.sample(list(range(61, 100)), 4)
+    # city_num_list += random.sample(list(range(101, 200)), 4)
 
     # Sort list to start with the smallest number of cities and work our way up
     city_num_list.sort()
