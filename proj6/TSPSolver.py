@@ -226,7 +226,14 @@ class TSPSolver:
 		pass
 
 	def maxMinACO(self, time_allowance=60.0):
-		"""This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem."""
+		"""
+		This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem.
+		
+		Originally, I began working off of this paper: https://arxiv.org/abs/2203.02228
+		but I ended up beginning to work on the Max-Min Ant System algorithm instead as they described
+		as their baseline algorithm. So ultimately, I used both their description of MMAS as well as 
+		the original paper here: http://www.cs.ubc.ca/~hoos/Publ/fgcs00.pdf as references.
+		"""
 		cities = self._scenario.getCities()
 		max_iterations = 1000
 		num_ants = 10 # the smaller this is, the more likely the algorithm will break bc all ants can't find a solution
@@ -297,8 +304,7 @@ class TSPSolver:
 
 	def _calcTauLimits(self, bssf_cost, rho, tau_min_coeff):
 		tau_max = 1 / ((1 - rho) * bssf_cost)
-		tau_min = min(tau_max, tau_max * tau_min_coeff)
-		# tau_min = 0
+		tau_min = min(tau_max, tau_max * tau_min_coeff) # this should be 0 when p_best = 1
 		print(f"\tbssf_cost: {bssf_cost}, rho: {rho}, tau_max:{tau_max}, tau_min: {tau_min}")
 		return tau_max, tau_min
 
