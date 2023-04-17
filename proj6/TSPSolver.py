@@ -83,6 +83,7 @@ class TSPSolver:
 			route = [startCity]
 			visited = set(route)
 			unvisited = set(cities)
+			unvisited.remove(startCity)
 			while not tourFound and time.time() - start_time < time_allowance:
 				nextCity = min(unvisited, key=lambda city: route[-1].costTo(city))
 				if route[-1].costTo(nextCity) == math.inf:
