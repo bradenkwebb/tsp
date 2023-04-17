@@ -193,33 +193,22 @@ class TSPSolver:
 				states.append(newMatrix)
 		return states
 
-	''' <summary>
-		This is the entry point for the algorithm you'll write for your group project.
-		</summary>
-		<returns>results dictionary for GUI that contains three ints: cost of best solution,
-		time spent to find best solution, total number of solutions found during search, the
-		best solution found.  You may use the other three field however you like.
-		algorithm</returns>
-	'''
-	# def fancy(self, time_allowance=60.0):
-	# 	pass
 
+	"""
+	This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem.
+	
+	Originally, I began working off of this paper: https://arxiv.org/abs/2203.02228
+	but I ended up beginning to work on the Max-Min Ant System algorithm instead as they described
+	as their baseline algorithm. So ultimately, I used both their description of MMAS as well as 
+	the original paper here: http://www.cs.ubc.ca/~hoos/Publ/fgcs00.pdf as references.
+	"""
 	def fancy(self, time_allowance=60.0):
-		"""
-		This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem.
-		
-		Originally, I began working off of this paper: https://arxiv.org/abs/2203.02228
-		but I ended up beginning to work on the Max-Min Ant System algorithm instead as they described
-		as their baseline algorithm. So ultimately, I used both their description of MMAS as well as 
-		the original paper here: http://www.cs.ubc.ca/~hoos/Publ/fgcs00.pdf as references.
-		"""
 		cities = self._scenario.getCities()
-		max_iterations = 1000
-		num_ants = 10 # the smaller this is, the more likely the algorithm will break bc all ants can't find a solution
-		rho = .98 # evaporation rate (this probably isn't where I should put this)
+		num_ants = 20 # the smaller this is, the more likely the algorithm will break bc all ants can't find a solution
+		rho = .99 # evaporation rate (this probably isn't where I should put this)
 		p_best = 1 # probability that constructed solution will contain solely the highest pheromone edges
 		alpha = 1 # pheromone importance
-		beta = 5 # heuristic importance
+		beta = 2 # heuristic importance
 		np.set_printoptions(precision=5)
 
 		# Initialize the best-solution-so-far with the greedy algorithm
@@ -254,10 +243,12 @@ class TSPSolver:
 		num_iterations = 0
 		while not converged and time.time() - start_time < time_allowance:
 			num_iterations += 1
+			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max)
 			ants = set(Ant(cities, alpha, beta) for _ in range(num_ants))	# Initialize the ant population
 			invalid_ants = set()
 			for ant in ants:
 				for _ in range(len(cities)):
+					# chooseNextCity isn't done quite right, but it's close
 					if not ant.chooseNextCity(pheromone_matrix, heuristic_matrix):
 						invalid_ants.add(ant)
 						break
@@ -268,14 +259,14 @@ class TSPSolver:
 				results['count'] += 1
 				tau_max, tau_min = self._calcTauLimits(bssf.cost, rho, tau_min_coeff)
 			pheromone_matrix = self._updatePheromones(pheromone_matrix, rho, best_ant, dist_matrix, tau_max, tau_min)
-			# converged = self.checkConvergence(pheromone_matrix, tau_max, tau_min)
-			num_iterations += 1
 		
-		print(f"final pheromone matrix:")
-		print(pheromone_matrix)
+		# print(f"final pheromone matrix:")
+		# print(pheromone_matrix)
+		print(f"MAX-MIN ACO COMPLETE")
 		print(f"Number of iterations: {num_iterations}")
 		print(f"final tau_max: {tau_max}")
 		print(f"final tau_min: {tau_min}")
+		print(f"final bssf cost: {bssf.cost}")
 		results['time'] = time.time() - start_time
 		results['soln'] = bssf
 		results['cost'] = bssf.cost
@@ -298,4 +289,16 @@ class TSPSolver:
 				else:
 					pheromone_matrix[city_index][best_ant.route[0]] += delta_tau
 		return np.clip(pheromone_matrix, tau_min, tau_max, out=pheromone_matrix)
+	
+	""" 
+	Convergenece is defined on page 15 of Stützle and Hoos (1999) as when "for each choice point,
+	one of the solution components has tau_max as associated pheromone trail, while all 
+	alternative solution components have a pheromone trail value tau_min".
+	"""
+	def _check_convergence(self, pheromone_matrix, tau_min, tau_max):
+		for row in pheromone_matrix:
+			if not np.where(tau_max - row < .0001, 1, 0).sum() == 1 \
+				or not np.where(row - tau_min < .0001, 1, 0).sum() == len(row) - 1:
+				return False
+		return True
 		
