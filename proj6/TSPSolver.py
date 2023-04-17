@@ -70,63 +70,42 @@ class TSPSolver:
 			self._bssf = bssf
 		return results
 
-	''' <summary>
-		This algorithm finds a (generally sub-optimal) solution to the TSP. It returns the first solution it finds,
-		and while it is somewhat greedy, it is not actually as greedy as it could be - it instead uses the same general
-		heuristic that I use in the branch-and-bound algorithm, always picking the state closest to a solution, and only
-		then optimizing for cost. It is a branching algorithm without bound, that prioritizes deep, low-cost states. 
-		This is a good algorithm to use as a baseline for comparison, as it is very fast and relatively simple to implement.
+	def greedy( self,time_allowance=60.0 ):
+		print('inside greedy-------------------')
+		cities = self._scenario.getCities()
+		start_time = time.time()
+		bssf = None
 
-		The time and space complexity of this algorithm depend largely on the sparsity of the graph. If the graph is
-		very sparse and asymmetric, then the algorithm will have to search a large number of states, and will have a high time complexity.
-		If the graph is very dense, then almost any state of sufficient depth will be a solution, and the algorithm will
-		have a lower time complexity.
+		tourFound = False
+		for startCity in cities:
+			if tourFound or time.time() - start_time > time_allowance:
+				break
+			route = [startCity]
+			visited = set(route)
+			unvisited = set(cities)
+			while not tourFound and time.time() - start_time < time_allowance:
+				nextCity = min(unvisited, key=lambda city: route[-1].costTo(city))
+				if route[-1].costTo(nextCity) == math.inf:
+					break
+				route.append(nextCity)
+				visited.add(nextCity)
+				unvisited.remove(nextCity)
+				if not unvisited:
+					bssf = TSPSolution(route)
+					tourFound = bssf.cost < math.inf
+					break
 
-		If we were searching for the optimal solution, I calculate that in the worst case, there are O(n!) states, where n is the
-		number of cities, which could need to be searched. However, since we terminate as soon as we find a solution, the time complexity
-		is much closer to O(n)*O(self._expand()) = O(n^4), and we see such polynomial-time behavior empirically as well. The space
-		complexity is O(n^3), since we store a matrix of size n^2 for each state, and we store a queue of these states that shrinks
-		and grows as we search the tree.
-		</summary>
-		<returns>results dictionary for GUI that contains three ints: cost of best solution,
-		time spent to find best solution, total number of solutions found, the best
-		solution found, and three null values for fields not used for this
-		algorithm</returns>
-	'''
-	def greedy( self, time_allowance=60.0):
+		#end results O(1) in time
 		results = {}
+		end_time = time.time()
+		results['cost'] = bssf.cost
+		results['time'] = end_time - start_time
+		results['count'] = 0
+		results['soln'] = bssf
 		results['max'] = None
 		results['total'] = None
 		results['pruned'] = None
-		results['count'] = 0
-		bssf = None
-		cities = self._scenario.getCities()
-		S = []
-		bssf = None
-		heappush(S, TSPCostMatrix(cities))
-
-		start_time = time.time()
-		while S and time.time() - start_time < time_allowance: 
-			P = heappop(S)
-			states = self._expand(P) # O(n^3)
-			for state in states: # In the worst case, this is O(n) in the number of states
-				if len(state.path) == len(cities):
-					potSolution = TSPSolution(state.getRoute(cities))
-					if potSolution.cost < math.inf:
-						bssf = potSolution
-						print(f"new bssf found: {bssf.cost}")
-						S.clear() # this allows us to break out of both loops
-						break
-				else:
-					heappush(S, state)
-		end_time = time.time()
-
-		results['cost'] = bssf.cost if bssf else math.inf
-		results['time'] = end_time - start_time
-		results['soln'] = bssf
-		print(f"Greedy: {results}")
-		if self._bssf is None or results['cost'] < self._bssf.cost:
-			self._bssf = bssf
+		print('ending greedy----------------')
 		return results
 
 	''' <summary>
@@ -222,10 +201,10 @@ class TSPSolver:
 		best solution found.  You may use the other three field however you like.
 		algorithm</returns>
 	'''
-	def fancy(self, time_allowance=60.0):
-		pass
+	# def fancy(self, time_allowance=60.0):
+	# 	pass
 
-	def maxMinACO(self, time_allowance=60.0):
+	def fancy(self, time_allowance=60.0):
 		"""
 		This is my implementation of an MMAS Ant Colony Optimization algorithm for the TSP problem.
 		
