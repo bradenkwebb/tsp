@@ -210,6 +210,7 @@ class TSPSolver:
 		p_best = 1 # probability that constructed solution will contain solely the highest pheromone edges
 		alpha = 1 # pheromone importance
 		beta = 2 # heuristic importance
+		epsilon = .0001 # the margin of error for convergence
 		np.set_printoptions(precision=5)
 
 		# Initialize the best-solution-so-far with the greedy algorithm
@@ -244,7 +245,7 @@ class TSPSolver:
 		num_iterations = 0
 		while not converged and time.time() - start_time < time_allowance:
 			num_iterations += 1
-			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max)
+			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max, epsilon=epsilon)
 			ants = set(Ant(cities, alpha, beta) for _ in range(num_ants))	# Initialize the ant population
 			invalid_ants = set()
 			for ant in ants:
@@ -296,10 +297,10 @@ class TSPSolver:
 	one of the solution components has tau_max as associated pheromone trail, while all 
 	alternative solution components have a pheromone trail value tau_min".
 	"""
-	def _check_convergence(self, pheromone_matrix, tau_min, tau_max):
+	def _check_convergence(self, pheromone_matrix, tau_min, tau_max, epsilon=.0001):
 		for row in pheromone_matrix:
-			if not np.where(tau_max - row < .0001, 1, 0).sum() == 1 \
-				or not np.where(row - tau_min < .0001, 1, 0).sum() == len(row) - 1:
+			if not np.where(tau_max - row < epsilon, 1, 0).sum() == 1 \
+				or not np.where(row - tau_min < epsilon, 1, 0).sum() == len(row) - 1:
 				return False
 		return True
 		
