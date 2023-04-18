@@ -250,7 +250,7 @@ class TSPSolver:
 		while not converged and time.time() - start_time < time_allowance:
 			num_iterations += 1
 			#print(num_iterations)
-			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max)
+			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max, convergenceParameter)
 			#print(pheromone_matrix)
 			ants = set(Ant(cities, alpha, beta) for _ in range(num_ants))	# Initialize the ant population
 			invalid_ants = set()
@@ -307,8 +307,7 @@ class TSPSolver:
 	one of the solution components has tau_max as associated pheromone trail, while all 
 	alternative solution components have a pheromone trail value tau_min".
 	"""
-	def _check_convergence(self, pheromone_matrix, tau_min, tau_max):
-		convergenceParameter = .001
+	def _check_convergence(self, pheromone_matrix, tau_min, tau_max, convergenceParameter):
 		for row in pheromone_matrix:
 			if not np.where(tau_max - row < convergenceParameter, 1, 0).sum() == 1 \
 				or not np.where(row - tau_min < convergenceParameter, 1, 0).sum() == len(row) - 1: #why -1?
