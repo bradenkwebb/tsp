@@ -205,13 +205,15 @@ class TSPSolver:
 	"""
 	def fancy(self, time_allowance=60.0):
 		cities = self._scenario.getCities()
-		num_ants = 20 # the smaller this is, the more likely the algorithm will break bc all ants can't find a solution
-		rho = .99 # evaporation rate (this probably isn't where I should put this)
-		p_best = 1 # probability that constructed solution will contain solely the highest pheromone edges
+		num_ants = 10 # the smaller this is, the more likely the algorithm will break bc all ants can't find a solution
+		rho = .97 # evaporation rate (this probably isn't where I should put this)
+		p_best = 0.99 # probability that constructed solution will contain solely the highest pheromone edges
 		alpha = 1 # pheromone importance
 		beta = 2 # heuristic importance
 		epsilon = .0001 # the margin of error for convergence
 		np.set_printoptions(precision=5)
+
+		#iterationTolerance = 500 #the number of iterations the algorithm can do before terminating
 
 		# Initialize the best-solution-so-far with the greedy algorithm
 		results = self.greedy(time_allowance=time_allowance)
@@ -239,13 +241,17 @@ class TSPSolver:
 				else:
 					heuristic_matrix[i][j] = 1
 
+		print('starting iteration ------------------------------------')
 		# Iterate until time runs out or the algorithm converges
 		converged = False
 		start_time = time.time()
 		num_iterations = 0
+		#bssfUpdateIteration = num_iterations
 		while not converged and time.time() - start_time < time_allowance:
 			num_iterations += 1
-			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max, epsilon=epsilon)
+			#print(num_iterations)
+			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max)
+			#print(pheromone_matrix)
 			ants = set(Ant(cities, alpha, beta) for _ in range(num_ants))	# Initialize the ant population
 			invalid_ants = set()
 			for ant in ants:
@@ -260,7 +266,11 @@ class TSPSolver:
 				print(f"New best solution!!!: {bssf.cost}")
 				results['count'] += 1
 				tau_max, tau_min = self._calcTauLimits(bssf.cost, rho, tau_min_coeff)
+				#bssfUpdateIteration = num_iterations
 			pheromone_matrix = self._updatePheromones(pheromone_matrix, rho, best_ant, dist_matrix, tau_max, tau_min)
+			#if (bssfUpdateIteration + iterationTolerance < num_iterations):
+			#	converged = True
+
 		
 		# print(f"final pheromone matrix:")
 		# print(pheromone_matrix)
@@ -297,10 +307,11 @@ class TSPSolver:
 	one of the solution components has tau_max as associated pheromone trail, while all 
 	alternative solution components have a pheromone trail value tau_min".
 	"""
-	def _check_convergence(self, pheromone_matrix, tau_min, tau_max, epsilon=.0001):
+	def _check_convergence(self, pheromone_matrix, tau_min, tau_max):
+		convergenceParamater = .0001
 		for row in pheromone_matrix:
-			if not np.where(tau_max - row < epsilon, 1, 0).sum() == 1 \
-				or not np.where(row - tau_min < epsilon, 1, 0).sum() == len(row) - 1:
+			if not np.where(tau_max - row < convergenceParamater, 1, 0).sum() == 1 \
+				or not np.where(row - tau_min < convergenceParamater, 1, 0).sum() == len(row) - 1: #why -1?
 				return False
 		return True
 		
