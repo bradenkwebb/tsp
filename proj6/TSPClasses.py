@@ -50,7 +50,11 @@ class Ant():
 			# normalize the probabilities
 			probs /= total
 			# choose the next city
-			next_city_index = np.random.choice(len(self.cities), p=probs)
+			cityIndexes = range(len(self.cities))
+			newProbs = np.delete(probs.copy(), self.route)
+			cityIndexes = np.delete(cityIndexes, self.route)
+			indexOfIndex = np.random.choice(len(cityIndexes), p=newProbs)
+			next_city_index = cityIndexes[indexOfIndex]
 			self.route.append(next_city_index)
 			self.route_set.add(next_city_index)
 		return True
