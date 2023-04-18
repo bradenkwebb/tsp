@@ -77,7 +77,7 @@ class TSPSolver:
 		bssf = None
 
 		tourFound = False
-		for startCity in cities:
+		for startCity in cities: # O(n) max
 			if tourFound or time.time() - start_time > time_allowance:
 				break
 			route = [startCity]
@@ -213,7 +213,7 @@ class TSPSolver:
 		convergenceParameter = .0001
 		np.set_printoptions(precision=5)
 
-		#iterationTolerance = 500 #the number of iterations the algorithm can do before terminating
+		iterationTolerance = 50000 #the number of iterations the algorithm can do before terminating
 
 		# Initialize the best-solution-so-far with the greedy algorithm
 		results = self.greedy(time_allowance=time_allowance)
@@ -246,11 +246,11 @@ class TSPSolver:
 		converged = False
 		start_time = time.time()
 		num_iterations = 0
-		#bssfUpdateIteration = num_iterations
+		bssfUpdateIteration = num_iterations
 		while not converged and time.time() - start_time < time_allowance:
 			num_iterations += 1
 			#print(num_iterations)
-			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max)
+			converged = self._check_convergence(pheromone_matrix, tau_min, tau_max, convergenceParameter)
 			#print(pheromone_matrix)
 			ants = set(Ant(cities, alpha, beta) for _ in range(num_ants))	# Initialize the ant population
 			invalid_ants = set()
@@ -266,10 +266,10 @@ class TSPSolver:
 				print(f"New best solution!!!: {bssf.cost}")
 				results['count'] += 1
 				tau_max, tau_min = self._calcTauLimits(bssf.cost, rho, tau_min_coeff)
-				#bssfUpdateIteration = num_iterations
+				bssfUpdateIteration = num_iterations
 			pheromone_matrix = self._updatePheromones(pheromone_matrix, rho, best_ant, dist_matrix, tau_max, tau_min)
-			#if (bssfUpdateIteration + iterationTolerance < num_iterations):
-			#	converged = True
+			if (bssfUpdateIteration + iterationTolerance < num_iterations):
+				converged = True
 
 		
 		# print(f"final pheromone matrix:")
@@ -307,7 +307,7 @@ class TSPSolver:
 	one of the solution components has tau_max as associated pheromone trail, while all 
 	alternative solution components have a pheromone trail value tau_min".
 	"""
-	def _check_convergence(self, pheromone_matrix, tau_min, tau_max, convergenceParameter = .0001):
+	def _check_convergence(self, pheromone_matrix, tau_min, tau_max, convergenceParameter):
 		for row in pheromone_matrix:
 			if not np.where(tau_max - row < convergenceParameter, 1, 0).sum() == 1 \
 				or not np.where(row - tau_min < convergenceParameter, 1, 0).sum() == len(row) - 1: #why -1?
