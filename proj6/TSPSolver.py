@@ -210,6 +210,7 @@ class TSPSolver:
 		p_best = 0.99 # probability that constructed solution will contain solely the highest pheromone edges
 		alpha = 1 # pheromone importance
 		beta = 2 # heuristic importance
+		convergenceParameter = .0001
 		np.set_printoptions(precision=5)
 
 		iterationTolerance = 50000 #the number of iterations the algorithm can do before terminating
@@ -307,10 +308,10 @@ class TSPSolver:
 	alternative solution components have a pheromone trail value tau_min".
 	"""
 	def _check_convergence(self, pheromone_matrix, tau_min, tau_max):
-		convergenceParamater = .001
+		convergenceParameter = .001
 		for row in pheromone_matrix:
-			if not np.where(tau_max - row < convergenceParamater, 1, 0).sum() == 1 \
-				or not np.where(row - tau_min < convergenceParamater, 1, 0).sum() == len(row) - 1: #why -1?
+			if not np.where(tau_max - row < convergenceParameter, 1, 0).sum() == 1 \
+				or not np.where(row - tau_min < convergenceParameter, 1, 0).sum() == len(row) - 1: #why -1?
 				return False
 		return True
 		
